@@ -76,8 +76,10 @@ public class BWStars extends CommandBase {
     @Override
     public void processCommand(ICommandSender sender, String[] args) throws CommandException {
         EntityPlayer player = Minecraft.getMinecraft().thePlayer;
+
+        //BWStars Menu
         if(args.length < 1){
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "Bed Wars Stars Usages:"));
+            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "BWStars Usages:"));
             player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws key [API Key] // Sets and stores API Key"));
             player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws deletekey // Deletes API Key stored"));
             player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws stats [Player] // Detailed stat lookup of a player"));
@@ -85,12 +87,12 @@ public class BWStars extends CommandBase {
             return;
         }
 
-
+        //Config delete command
         if(args[0].contains("deletekey")){
             Config.delete();
         }
 
-
+        //Add API key command
         else if (args[0].contains("key")){
             if(args.length < 2){
                 player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "Usage: /bws key [API Key]"));
@@ -98,12 +100,13 @@ public class BWStars extends CommandBase {
             }
 
             String input = args[1];
-            if (args[1].length() > 35 && args[1].length() < 37){
+            if (args[1].length() > 35 && args[1].length() < 37) //Make sure the key is the correct length
+                {
                 UUID key = UUID.fromString(input);
                 HypixelHttpClient client = new ApacheHttpClient(key);
                 HypixelAPI hypixelAPI = new HypixelAPI(client);
                 try {
-                    PlayerReply.Player response = hypixelAPI.getPlayerByName(getRandomString()).get().getPlayer();
+                    PlayerReply.Player response = hypixelAPI.getPlayerByName(getRandomString()).get().getPlayer(); //Tests new key
                     Config.setStoredAPIKey(args[1]);
                     player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.GREEN + "[BWStars] Successfully set key!"));
                 } catch (InterruptedException e) {
@@ -118,26 +121,33 @@ public class BWStars extends CommandBase {
             }
         }
 
-
+        //Stats check command
         else if(args[0].contains("stats")){
             String key1 = String.valueOf(Config.getStoredAPIKey());
-            System.out.println(key1);
+
             if(key1.contains("empty")){player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED+"[BWStars] No API Key Stored! Use /bws key [API Key]"));return;}
             if(args.length < 2){player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED+"Usage: /bws stats [player]"));return;}
             UUID key = UUID.fromString(key1);
             HypixelHttpClient client = new ApacheHttpClient(key);
             HypixelAPI hypixelAPI = new HypixelAPI(client);
             try {
+                //Get response
                 PlayerReply.Player response = hypixelAPI.getPlayerByName(args[1]).get().getPlayer();
+
+                //Nick check
                 stars = response.getIntProperty("achievements.bedwars_level", -1);
                 if (stars == -1){player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED+"[BWStars] This player is a nick!"));return;}
+
+
                 rank1 = response.getHighestRank();
                 plus = response.getSelectedPlusColor();
-                System.out.println(rank1 + " " + plus);
+
+                //Get rank, plus, star colours
                 getColors(rank1, stars, plus);
                 numbers.removeAll(numbers);
                 getStars(stars);
 
+                //Get stats
                 double networklevel = response.getNetworkLevel();
                 int winstreak = response.getIntProperty("stats.Bedwars.winstreak", 0);
                 double wins = response.getDoubleProperty("stats.Bedwars.wins_bedwars", 0);
@@ -177,6 +187,7 @@ public class BWStars extends CommandBase {
             } catch (InterruptedException e) {
                 player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED+"[BWStars] API fail [1]"));
             } catch (ExecutionException e) {
+                //This error is very common
                 player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED+"[BWStars] API fail [2]: On Cooldown"));
             }
         }
@@ -196,12 +207,15 @@ public class BWStars extends CommandBase {
             Collection<NetworkPlayerInfo> playersC = Minecraft.getMinecraft().getNetHandler().getPlayerInfoMap();
             playersC.forEach((loadedPlayer) -> {
                 try {
+                    //Get team
                     loadedPlayer.getPlayerTeam().getRegisteredName();
                 } catch (NullPointerException e) { return; }
                 String playerName = loadedPlayer.getGameProfile().getName();
                 String team = loadedPlayer.getPlayerTeam().getRegisteredName();
                 String team1 = null;
                 String inputteam = args[1].toLowerCase();
+
+                //Make the team "blue" instead of "blue10" or something
                 if (team.contains("Blue")) {
                     team1 = "blue";
                 } else if (team.contains("Green")) {
@@ -230,6 +244,7 @@ public class BWStars extends CommandBase {
                     try {
                         PlayerReply.Player response = hypixelAPI.getPlayerByName(playerName).get().getPlayer();
 
+                        //Nick Check
                         stars = response.getIntProperty("achievements.bedwars_level", -1);
                         if (stars == -1) {
                             player.addChatComponentMessage(new ChatComponentText(playerName + EnumChatFormatting.YELLOW + EnumChatFormatting.ITALIC + " NICK"));
@@ -278,7 +293,7 @@ public class BWStars extends CommandBase {
                 }
             });
         } else {
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "Bed Wars Stars Usages:"));
+            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "BWStars Usages:"));
             player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws key [API Key] // Sets and stores API Key"));
             player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws deletekey // Deletes API Key stored"));
             player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws stats [Player] // Detailed stat lookup of a player"));
@@ -287,6 +302,7 @@ public class BWStars extends CommandBase {
         }
     }
 
+    //This is for the check when you input your api key for the first time
     protected String getRandomString() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
         StringBuilder string = new StringBuilder();
