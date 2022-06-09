@@ -235,7 +235,6 @@ public class BWStars extends CommandBase {
                 } else {
                     return;
                 }
-                System.out.println(playerName + " " + team1);
                 if (inputteam.equals(team1)) {
                     if (message) {
                         player.addChatComponentMessage(new ChatComponentText("--" + EnumChatFormatting.GRAY + "==" + EnumChatFormatting.DARK_GRAY + "|||||" + EnumChatFormatting.WHITE + " BWStars Team Lookup " + EnumChatFormatting.DARK_GRAY + "|||||" + EnumChatFormatting.GRAY + "==" + EnumChatFormatting.WHITE + "--"));
