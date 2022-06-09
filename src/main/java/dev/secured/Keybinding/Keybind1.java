@@ -77,17 +77,23 @@ public class Keybind1 {
                     double deaths = response.getDoubleProperty("stats.Bedwars.deaths_bedwars", 0);
                     double finalkills = response.getDoubleProperty("stats.Bedwars.final_kills_bedwars", 0);
                     double finaldeaths = response.getDoubleProperty("stats.Bedwars.final_deaths_bedwars", 0);
+                    String party = response.getStringProperty("channel", "").toLowerCase();
 
                     double wl = wins / losses;
                     double kd = kills / deaths;
                     double fkd = finalkills / finaldeaths;
 
+                    if (party.contains("party")){
+                        party = "PARTY";
+                    } else {
+                        party = "";
+                    }
                     rank1 = response.getHighestRank();
                     plus = response.getSelectedPlusColor();
                     getColors(rank1, stars, plus, winstreak, fkd, kd, wl);
                     numbers.removeAll(numbers);
                     getStars(stars);
-                    player.addChatComponentMessage(new ChatComponentText(starColor1 + "[" + starColor2 + numbers.get(0) + starColor3 + numbers.get(1) + starColor4 + numbers.get(2) + starColor5 + numbers.get(3) + starColor6 + star1 + starColor7 + "] " + rankColor1 + prefix + plusColor + plusString + rankColor2 + suffix + response.getName() + EnumChatFormatting.WHITE + ": " + wsColor + winstreak + EnumChatFormatting.GRAY + EnumChatFormatting.BOLD + " / " + EnumChatFormatting.RESET + fkdColor + format.format(fkd) + EnumChatFormatting.GRAY + EnumChatFormatting.BOLD + " / " + EnumChatFormatting.RESET + kdColor + format.format(kd) + EnumChatFormatting.GRAY + EnumChatFormatting.BOLD + " / " + EnumChatFormatting.RESET + wlColor + format.format(wl)));
+                    player.addChatComponentMessage(new ChatComponentText(starColor1 + "[" + starColor2 + numbers.get(0) + starColor3 + numbers.get(1) + starColor4 + numbers.get(2) + starColor5 + numbers.get(3) + starColor6 + star1 + starColor7 + "] " + rankColor1 + prefix + plusColor + plusString + rankColor2 + suffix + response.getName() + EnumChatFormatting.WHITE + ": " + wsColor + winstreak + EnumChatFormatting.GRAY + EnumChatFormatting.BOLD + " / " + EnumChatFormatting.RESET + fkdColor + format.format(fkd) + EnumChatFormatting.GRAY + EnumChatFormatting.BOLD + " / " + EnumChatFormatting.RESET + kdColor + format.format(kd) + EnumChatFormatting.GRAY + EnumChatFormatting.BOLD + " / " + EnumChatFormatting.RESET + wlColor + format.format(wl) + " " + EnumChatFormatting.BLUE + EnumChatFormatting.ITALIC + party));
                 } catch (InterruptedException e) {
                     player.addChatComponentMessage(new ChatComponentText(loadedPlayerName + "|" + EnumChatFormatting.ITALIC + " API FAIL [1]"));
                 } catch (ExecutionException e) {
@@ -112,7 +118,7 @@ public class Keybind1 {
         if (plus.contains("YELLOW")) {
             plusColor = EnumChatFormatting.YELLOW;
         }
-        if (plus.contains("PINK")) {
+        if (plus.contains("LIGHT_PURPLE")) {
             plusColor = EnumChatFormatting.LIGHT_PURPLE;
         }
         if (plus.contains("WHITE")) {
@@ -547,11 +553,11 @@ public class Keybind1 {
             fkdColor = EnumChatFormatting.DARK_PURPLE;
         }
 
-        if (kd < 1){
+        if (kd < 0.6){
             kdColor = EnumChatFormatting.GREEN;
-        } else if (kd < 3){
+        } else if (kd < 2){
             kdColor = EnumChatFormatting.GOLD;
-        } else if (wl < 5){
+        } else if (wl < 4){
             kdColor = EnumChatFormatting.DARK_RED;
         } else if (wl >= 4){
             kdColor = EnumChatFormatting.DARK_PURPLE;

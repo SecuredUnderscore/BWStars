@@ -81,7 +81,7 @@ public class Config {
         try {
             if (configFile.createNewFile()) {
                 FileWriter w = new FileWriter(configFile, true);
-                w.write("# BWStats v" + "0.01" + " Config" + System.lineSeparator());
+                w.write("# BWStars v" + "0.01" + " Config" + System.lineSeparator());
                 w.write(System.lineSeparator());
                 w.write("# Hypixel API Key" + System.lineSeparator());
                 w.write("api-key: empty" + System.lineSeparator());

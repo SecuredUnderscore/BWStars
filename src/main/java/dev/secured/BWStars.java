@@ -1,9 +1,5 @@
 package dev.secured;
 
-import dev.secured.Commands.Command1;
-import dev.secured.Commands.Command2;
-import dev.secured.Commands.Command3;
-import dev.secured.Commands.Command4;
 import dev.secured.Keybinding.Keybind1;
 import dev.secured.Utils.Config;
 import net.minecraft.client.settings.KeyBinding;
@@ -16,7 +12,7 @@ import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.lwjgl.input.Keyboard;
 
-@Mod(modid = "tm", name = "Test Mod", version = "0.01")
+@Mod(modid = "bws", name = "BWStars", version = "0.03")
 public class BWStars {
 
     public static KeyBinding keybinding1 = new KeyBinding("Mass lobby lookup", Keyboard.KEY_M, "BWStars");
@@ -26,10 +22,7 @@ public class BWStars {
         Config.create();
         ClientRegistry.registerKeyBinding(keybinding1);
         FMLCommonHandler.instance().bus().register(new Keybind1());
-        ClientCommandHandler.instance.registerCommand(new Command1());
-        ClientCommandHandler.instance.registerCommand(new Command2());
-        ClientCommandHandler.instance.registerCommand(new Command3());
-        ClientCommandHandler.instance.registerCommand(new Command4());
+        ClientCommandHandler.instance.registerCommand(new dev.secured.Commands.BWStars());
     }
 
     @Mod.EventHandler
