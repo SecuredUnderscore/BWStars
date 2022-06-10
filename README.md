@@ -22,7 +22,7 @@ BWStars is an easy to use stat checker for Hypixel Bed Wars
 
 # Installation
   - Forge 1.8.9 must be installed & can be downloaded here: https://files.minecraftforge.net/net/minecraftforge/forge/index_1.8.9.html
-  - Download the **BWStars-(Version)** JAR in the releases tab for this project
+  - Download the **BWStars-(Version)** JAR in the releases tab for this project: https://github.com/SecuredUnderscore/BWStars/releases/tag/BWStars0.04
   - Add the JAR to your mod folder: **.minecraft/mods**
 
 # Credits
