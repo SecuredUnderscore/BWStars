@@ -18,6 +18,8 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import static dev.secured.Utils.NewThread.exec;
+
 public class Keybind1 {
 
     int stars;
@@ -51,7 +53,7 @@ public class Keybind1 {
             EntityPlayer player = Minecraft.getMinecraft().thePlayer;
             String key1 = String.valueOf(Config.getStoredAPIKey());
             if (key1.contains("empty")) {
-                player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "[BWStars] No API Key Stored! Use /bwssetkey [apikey]"));
+                player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "[BWStars] No API Key Stored! Use /bws key [apikey]"));
                 return;
             }
             UUID key = UUID.fromString(key1);
@@ -62,43 +64,45 @@ public class Keybind1 {
             playersC.forEach((loadedPlayer) -> {
                 fail = false;
                 String loadedPlayerName = loadedPlayer.getGameProfile().getName();
-                try {
-                    PlayerReply.Player response = hypixelAPI.getPlayerByName(loadedPlayerName).get().getPlayer();
-                    stars = response.getIntProperty("achievements.bedwars_level", -1);
-                    if (stars == -1) {
-                        player.addChatComponentMessage(new ChatComponentText(loadedPlayerName + EnumChatFormatting.YELLOW + EnumChatFormatting.ITALIC + " NICK"));
-                        return;
+                exec.execute(() -> {
+                    try {
+                        PlayerReply.Player response = hypixelAPI.getPlayerByName(loadedPlayerName).get().getPlayer();
+                        stars = response.getIntProperty("achievements.bedwars_level", -1);
+                        if (stars == -1) {
+                            player.addChatComponentMessage(new ChatComponentText(loadedPlayerName + EnumChatFormatting.YELLOW + EnumChatFormatting.ITALIC + " NICK"));
+                            return;
+                        }
+
+                        int winstreak = response.getIntProperty("stats.Bedwars.winstreak", 0);
+                        double wins = response.getDoubleProperty("stats.Bedwars.wins_bedwars", 0);
+                        double losses = response.getDoubleProperty("stats.Bedwars.losses_bedwars", 0);
+                        double kills = response.getDoubleProperty("stats.Bedwars.kills_bedwars", 0);
+                        double deaths = response.getDoubleProperty("stats.Bedwars.deaths_bedwars", 0);
+                        double finalkills = response.getDoubleProperty("stats.Bedwars.final_kills_bedwars", 0);
+                        double finaldeaths = response.getDoubleProperty("stats.Bedwars.final_deaths_bedwars", 0);
+                        String party = response.getStringProperty("channel", "").toLowerCase();
+
+                        double wl = wins / losses;
+                        double kd = kills / deaths;
+                        double fkd = finalkills / finaldeaths;
+
+                        if (party.contains("party")){
+                            party = "PARTY";
+                        } else {
+                            party = "";
+                        }
+                        rank1 = response.getHighestRank();
+                        plus = response.getSelectedPlusColor();
+                        getColors(rank1, stars, plus, winstreak, fkd, kd, wl);
+                        numbers.removeAll(numbers);
+                        getStars(stars);
+                        player.addChatComponentMessage(new ChatComponentText(starColor1 + "[" + starColor2 + numbers.get(0) + starColor3 + numbers.get(1) + starColor4 + numbers.get(2) + starColor5 + numbers.get(3) + starColor6 + star1 + starColor7 + "] " + rankColor1 + prefix + plusColor + plusString + rankColor2 + suffix + response.getName() + EnumChatFormatting.WHITE + ": " + wsColor + winstreak + EnumChatFormatting.GRAY + EnumChatFormatting.BOLD + " / " + EnumChatFormatting.RESET + fkdColor + format.format(fkd) + EnumChatFormatting.GRAY + EnumChatFormatting.BOLD + " / " + EnumChatFormatting.RESET + kdColor + format.format(kd) + EnumChatFormatting.GRAY + EnumChatFormatting.BOLD + " / " + EnumChatFormatting.RESET + wlColor + format.format(wl) + " " + EnumChatFormatting.BLUE + EnumChatFormatting.ITALIC + party));
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    } catch (ExecutionException e) {
+                        throw new RuntimeException(e);
                     }
-
-                    int winstreak = response.getIntProperty("stats.Bedwars.winstreak", 0);
-                    double wins = response.getDoubleProperty("stats.Bedwars.wins_bedwars", 0);
-                    double losses = response.getDoubleProperty("stats.Bedwars.losses_bedwars", 0);
-                    double kills = response.getDoubleProperty("stats.Bedwars.kills_bedwars", 0);
-                    double deaths = response.getDoubleProperty("stats.Bedwars.deaths_bedwars", 0);
-                    double finalkills = response.getDoubleProperty("stats.Bedwars.final_kills_bedwars", 0);
-                    double finaldeaths = response.getDoubleProperty("stats.Bedwars.final_deaths_bedwars", 0);
-                    String party = response.getStringProperty("channel", "").toLowerCase();
-
-                    double wl = wins / losses;
-                    double kd = kills / deaths;
-                    double fkd = finalkills / finaldeaths;
-
-                    if (party.contains("party")){
-                        party = "PARTY";
-                    } else {
-                        party = "";
-                    }
-                    rank1 = response.getHighestRank();
-                    plus = response.getSelectedPlusColor();
-                    getColors(rank1, stars, plus, winstreak, fkd, kd, wl);
-                    numbers.removeAll(numbers);
-                    getStars(stars);
-                    player.addChatComponentMessage(new ChatComponentText(starColor1 + "[" + starColor2 + numbers.get(0) + starColor3 + numbers.get(1) + starColor4 + numbers.get(2) + starColor5 + numbers.get(3) + starColor6 + star1 + starColor7 + "] " + rankColor1 + prefix + plusColor + plusString + rankColor2 + suffix + response.getName() + EnumChatFormatting.WHITE + ": " + wsColor + winstreak + EnumChatFormatting.GRAY + EnumChatFormatting.BOLD + " / " + EnumChatFormatting.RESET + fkdColor + format.format(fkd) + EnumChatFormatting.GRAY + EnumChatFormatting.BOLD + " / " + EnumChatFormatting.RESET + kdColor + format.format(kd) + EnumChatFormatting.GRAY + EnumChatFormatting.BOLD + " / " + EnumChatFormatting.RESET + wlColor + format.format(wl) + " " + EnumChatFormatting.BLUE + EnumChatFormatting.ITALIC + party));
-                } catch (InterruptedException e) {
-                    player.addChatComponentMessage(new ChatComponentText(loadedPlayerName + "|" + EnumChatFormatting.ITALIC + " API FAIL [1]"));
-                } catch (ExecutionException e) {
-                    player.addChatComponentMessage(new ChatComponentText(loadedPlayerName + "|" + EnumChatFormatting.ITALIC + " API FAIL [2]: On Cooldown"));
-                }
+                });
             });
         }
     }

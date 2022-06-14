@@ -14,11 +14,12 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
-import scala.tools.nsc.ScalaDoc;
 
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+
+import static dev.secured.Utils.NewThread.exec;
 
 public class BWStars extends CommandBase {
 
@@ -132,6 +133,7 @@ public class BWStars extends CommandBase {
             UUID key = UUID.fromString(key1);
             HypixelHttpClient client = new ApacheHttpClient(key);
             HypixelAPI hypixelAPI = new HypixelAPI(client);
+            exec.execute(() -> {
             try {
                 //Get response
                 PlayerReply.Player response = hypixelAPI.getPlayerByName(args[1]).get().getPlayer();
@@ -192,6 +194,7 @@ public class BWStars extends CommandBase {
                 //This error is very common
                 player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED+"[BWStars] API fail [2]: On Cooldown"));
             }
+            });
         }
 
 
@@ -214,7 +217,7 @@ public class BWStars extends CommandBase {
                 } catch (NullPointerException e) { return; }
                 String playerName = loadedPlayer.getGameProfile().getName();
                 String team = loadedPlayer.getPlayerTeam().getRegisteredName();
-                String team1 = null;
+                String team1;
                 String inputteam = args[1].toLowerCase();
 
                 //Make the team "blue" instead of "blue10" or something
@@ -242,6 +245,7 @@ public class BWStars extends CommandBase {
                         player.addChatComponentMessage(new ChatComponentText("--" + EnumChatFormatting.GRAY + "==" + EnumChatFormatting.DARK_GRAY + "|||||" + EnumChatFormatting.WHITE + " BWStars Team Lookup " + EnumChatFormatting.DARK_GRAY + "|||||" + EnumChatFormatting.GRAY + "==" + EnumChatFormatting.WHITE + "--"));
                         message = false;
                     }
+                    exec.execute(() -> {
                     try {
                         PlayerReply.Player response = hypixelAPI.getPlayerByName(playerName).get().getPlayer();
 
@@ -288,6 +292,7 @@ public class BWStars extends CommandBase {
                     } catch (ExecutionException e) {
                         player.addChatComponentMessage(new ChatComponentText(loadedPlayer.getGameProfile().getName() + "|" + EnumChatFormatting.ITALIC + " API FAIL [2]: On Cooldown"));
                     }
+                });
 
                 } else {
                     return;
