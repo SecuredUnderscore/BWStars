@@ -12,7 +12,7 @@ import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.lwjgl.input.Keyboard;
 
-@Mod(modid = "bws", name = "BWStars", version = "0.04")
+@Mod(modid = "bws", name = "BWStars", version = "0.05")
 public class BWStars {
 
     public static KeyBinding keybinding1 = new KeyBinding("Mass lobby lookup", Keyboard.KEY_M, "BWStars");
