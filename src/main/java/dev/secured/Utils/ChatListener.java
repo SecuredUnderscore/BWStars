@@ -1,30 +1,25 @@
-package dev.secured.Commands;
+package dev.secured.Utils;
 
-import dev.secured.Utils.Config;
 import net.hypixel.api.HypixelAPI;
 import net.hypixel.api.apache.ApacheHttpClient;
 import net.hypixel.api.http.HypixelHttpClient;
 import net.hypixel.api.reply.PlayerReply;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.network.NetworkPlayerInfo;
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraftforge.client.event.ClientChatReceivedEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import org.lwjgl.Sys;
 
-import java.nio.charset.StandardCharsets;
-import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static dev.secured.Utils.NewThread.exec;
 
-public class BWStars extends CommandBase {
-
-    boolean message;
+public class ChatListener {
     int stars;
     String star1;
     List<String> numbers = new ArrayList<String>();
@@ -45,297 +40,56 @@ public class BWStars extends CommandBase {
     String suffix;
     boolean nick;
 
-    @Override
-    public boolean canCommandSenderUseCommand(ICommandSender sender) {
-        return true;
-    }
-
-    @Override
-    public int getRequiredPermissionLevel() {
-        return 0;
-    }
-
-    @Override
-    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
-        List<String> items = new ArrayList<String>();
-        items.add("key");
-        items.add("deletekey");
-        items.add("stats");
-        items.add("team");
-        return items;
-    }
-
-    @Override
-    public String getCommandName() {
-        return "bws";
-    }
-
-    @Override
-    public String getCommandUsage(ICommandSender sender) {
-        return "bws <args>";
-    }
-
-    @Override
-    public void processCommand(ICommandSender sender, String[] args) throws CommandException {
-        EntityPlayer player = Minecraft.getMinecraft().thePlayer;
-
-        //BWStars Menu
-        if(args.length < 1){
-            player.addChatComponentMessage(new ChatComponentText(""));
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "BWStars Usages:"));
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws key [API Key] // Sets and stores API Key"));
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws deletekey // Deletes API Key stored"));
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws stats [Player] // Detailed stat lookup of a player"));
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws team [Team] // Stat lookup via team colour"));
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws togglequeue // Toggle queue stars"));
-            player.addChatComponentMessage(new ChatComponentText(""));
-            return;
-        }
-
-        //Config delete command
-        if(args[0].contains("deletekey")){
-            Config.delete();
-        }
-
-        //Add API key command
-        else if (args[0].contains("key")){
-            if(args.length < 2){
-                player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "Usage: /bws key [API Key]"));
-                return;
-            }
-
-            String input = args[1];
-            if (args[1].length() > 35 && args[1].length() < 37) //Make sure the key is the correct length
-                {
-                UUID key = UUID.fromString(input);
+    @SubscribeEvent
+    public final void event(ClientChatReceivedEvent event) {
+        nick = true;
+        String message = event.message.getUnformattedText();
+        String[] splitedMessage = message.split("\\s+");
+        try {
+            if (splitedMessage[1].contains("has") && splitedMessage[2].contains("joined")) {
+                String toggle = String.valueOf(Config.getStoredToggleQueue());
+                if (toggle.contains("empty")) {
+                    return;
+                }
+                if (toggle.contains("false")) {
+                    return;
+                }
+                String key1 = String.valueOf(Config.getStoredAPIKey());
+                if (key1.contains("empty")) {
+                    return;
+                }
+                UUID key = UUID.fromString(key1);
                 HypixelHttpClient client = new ApacheHttpClient(key);
                 HypixelAPI hypixelAPI = new HypixelAPI(client);
-                try {
-                    PlayerReply.Player response = hypixelAPI.getPlayerByName(getRandomString()).get().getPlayer(); //Tests new key
-                    Config.setStoredAPIKey(args[1]);
-                    player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.GREEN + "[BWStars] Successfully set key!"));
-                } catch (InterruptedException e) {
-                    player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "[BWStars] Error setting key."));
-                    System.out.println(e);
-                } catch (ExecutionException e) {
-                    player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "[BWStars] Error setting key."));
-                    System.out.println(e);
-                }
-            } else {
-                player.addChatComponentMessage(new ChatComponentText("Please enter a valid API key"));
-            }
-        }
-
-        //Queue stars toggle command
-        else if(args[0].contains("togglequeue")){
-            String toggle = String.valueOf(Config.getStoredToggleQueue());
-            if(toggle.contains("empty")){Config.setStoredToggleQueue("true"); player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.GREEN + "[BWStars] Queue stars toggled: ON"));}
-            else if(toggle.contains("false")){Config.setStoredToggleQueue("true"); player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.GREEN + "[BWStars] Queue stars toggled: ON"));}
-            else if(toggle.contains("true")){Config.setStoredToggleQueue("false"); player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "[BWStars] Queue stars toggled: OFF"));}
-        }
-
-        //Stats check command
-        else if(args[0].contains("stats")){
-            String key1 = String.valueOf(Config.getStoredAPIKey());
-
-            if(key1.contains("empty")){player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED+"[BWStars] No API Key Stored! Use /bws key [API Key]"));return;}
-            if(args.length < 2){player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED+"Usage: /bws stats [Player]"));return;}
-            UUID key = UUID.fromString(key1);
-            HypixelHttpClient client = new ApacheHttpClient(key);
-            HypixelAPI hypixelAPI = new HypixelAPI(client);
-            exec.execute(() -> {
-            try {
-                //Get response
-                PlayerReply.Player response = hypixelAPI.getPlayerByName(args[1]).get().getPlayer();
-
-                //Nick check
-                stars = response.getIntProperty("achievements.bedwars_level", -1);
-                if (stars == -1){player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED+"[BWStars] This player is a nick!"));return;}
-
-
-                rank1 = response.getHighestRank();
-                plus = response.getSelectedPlusColor();
-
-                //Get rank, plus, star colours
-                getColors(rank1, stars, plus);
-                numbers.removeAll(numbers);
-                getStars(stars);
-
-                //Get stats
-                double networklevel = response.getNetworkLevel();
-                int winstreak = response.getIntProperty("stats.Bedwars.winstreak", 0);
-                double wins = response.getDoubleProperty("stats.Bedwars.wins_bedwars", 0);
-                double losses = response.getDoubleProperty("stats.Bedwars.losses_bedwars", 0);
-                double kills = response.getDoubleProperty("stats.Bedwars.kills_bedwars", 0);
-                double deaths = response.getDoubleProperty("stats.Bedwars.deaths_bedwars", 0);
-                double bedsbroken = response.getDoubleProperty("stats.Bedwars.beds_broken_bedwars", 0);
-                double bedslost = response.getDoubleProperty("stats.Bedwars.beds_lost_bedwars", 0);
-                double finalkills = response.getDoubleProperty("stats.Bedwars.final_kills_bedwars", 0);
-                double finaldeaths = response.getDoubleProperty("stats.Bedwars.final_deaths_bedwars", 0);
-                double sfinalkills = response.getDoubleProperty("stats.Bedwars.eight_one_final_kills_bedwars", 0);
-                double sfinaldeaths = response.getDoubleProperty("stats.Bedwars.eight_one_final_deaths_bedwars", 0);
-
-                double wl = wins/losses;
-                double kd = kills/deaths;
-                double bbl = bedsbroken/bedslost;
-                double fkd = finalkills/finaldeaths;
-                double sfkd = sfinalkills/sfinaldeaths;
-
-                EnumChatFormatting green = EnumChatFormatting.GREEN;
-                player.addChatComponentMessage(new ChatComponentText("--" + EnumChatFormatting.GRAY + "==" + EnumChatFormatting.DARK_GRAY + "|||||" + EnumChatFormatting.WHITE + " BWStars Stat Lookup " + EnumChatFormatting.DARK_GRAY + "|||||" + EnumChatFormatting.GRAY + "==" + EnumChatFormatting.WHITE + "--"));
-                player.addChatComponentMessage(new ChatComponentText(starColor1 + "[" + starColor2 + numbers.get(0) + starColor3 + numbers.get(1) + starColor4 + numbers.get(2) + starColor5 + numbers.get(3) + starColor6 + star1 + starColor7 + "] " + rankColor1 + prefix + plusColor + plusString + rankColor2 + suffix + response.getName() + EnumChatFormatting.WHITE + ":"));
-                player.addChatComponentMessage(new ChatComponentText("Network Level: " + green + format2.format(networklevel)));
-                player.addChatComponentMessage(new ChatComponentText("Total Winstreak: " + green + winstreak));
-                player.addChatComponentMessage(new ChatComponentText("Total Wins: " + green + format2.format(wins)));
-                player.addChatComponentMessage(new ChatComponentText("Total Losses: " + green + format2.format(losses)));
-                player.addChatComponentMessage(new ChatComponentText("Total Kills: " + green + format2.format(kills)));
-                player.addChatComponentMessage(new ChatComponentText("Total Deaths: " + green + format2.format(deaths)));
-                player.addChatComponentMessage(new ChatComponentText("Total Beds Broken: " + green + format2.format(bedsbroken)));
-                player.addChatComponentMessage(new ChatComponentText("Total Final Kills: " + green + format2.format(finalkills)));
-                player.addChatComponentMessage(new ChatComponentText("Total W/L Ratio: " + green + format.format(wl)));
-                player.addChatComponentMessage(new ChatComponentText("Total K/D Ratio: " + green + format.format(kd)));
-                player.addChatComponentMessage(new ChatComponentText("Total BB/L Ratio: " + green + format.format(bbl)));
-                player.addChatComponentMessage(new ChatComponentText("Total FK/D Ratio: " + green + format.format(fkd)));
-                player.addChatComponentMessage(new ChatComponentText("Solo FK/D Ratio: " + green + format.format(sfkd)));
-
-            } catch (InterruptedException e) {
-                player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED+"[BWStars] API fail [1]"));
-            } catch (ExecutionException e) {
-                //This error is very common
-                player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED+"[BWStars] API fail [2]: On Cooldown"));
-            }
-            });
-        }
-
-
-        else if(args[0].contains("team")){
-            String key1 = String.valueOf(Config.getStoredAPIKey());
-            if (key1.contains("empty")) {
-                player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "[BWStars] No API Key Stored! Use /bws key [API Key]"));
-                return;
-            }
-            if(args.length < 2){player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED+"Usage: /bws team [Team]"));return;}
-            UUID key = UUID.fromString(key1);
-            HypixelHttpClient client = new ApacheHttpClient(key);
-            HypixelAPI hypixelAPI = new HypixelAPI(client);
-            message = true;
-            Collection<NetworkPlayerInfo> playersC = Minecraft.getMinecraft().getNetHandler().getPlayerInfoMap();
-            playersC.forEach((loadedPlayer) -> {
-                try {
-                    //Get team
-                    loadedPlayer.getPlayerTeam().getRegisteredName();
-                } catch (NullPointerException e) { return; }
-                String playerName = loadedPlayer.getGameProfile().getName();
-                String team = loadedPlayer.getPlayerTeam().getRegisteredName();
-                String team1;
-                String inputteam = args[1].toLowerCase();
-
-                //Make the team "blue" instead of "blue10" or something
-                if (team.contains("Blue")) {
-                    team1 = "blue";
-                } else if (team.contains("Green")) {
-                    team1 = "green";
-                } else if (team.contains("Gray")) {
-                    team1 = "gray";
-                } else if (team.contains("Pink")) {
-                    team1 = "pink";
-                } else if (team.contains("Yellow")) {
-                    team1 = "yellow";
-                } else if (team.contains("Aqua")) {
-                    team1 = "aqua";
-                } else if (team.contains("Red")) {
-                    team1 = "red";
-                } else if (team.contains("White")) {
-                    team1 = "white";
-                } else {
-                    return;
-                }
-                if (inputteam.equals(team1)) {
-                    if (message) {
-                        player.addChatComponentMessage(new ChatComponentText("--" + EnumChatFormatting.GRAY + "==" + EnumChatFormatting.DARK_GRAY + "|||||" + EnumChatFormatting.WHITE + " BWStars Team Lookup " + EnumChatFormatting.DARK_GRAY + "|||||" + EnumChatFormatting.GRAY + "==" + EnumChatFormatting.WHITE + "--"));
-                        message = false;
-                    }
-                    exec.execute(() -> {
+                exec.execute(() -> {
                     try {
-                        PlayerReply.Player response = hypixelAPI.getPlayerByName(playerName).get().getPlayer();
-
-                        //Nick Check
+                        //Get response
+                        PlayerReply.Player response = hypixelAPI.getPlayerByName(splitedMessage[0]).get().getPlayer();
                         stars = response.getIntProperty("achievements.bedwars_level", -1);
+                        String[] lobby1 = splitedMessage[3].split("/");
+                        String lobby2 = lobby1[0].substring(1);
+                        String lobby3 = lobby1[1].replace(")", "");
+                        String lobby4 = lobby3.replace("!", "");
                         if (stars == -1) {
-                            player.addChatComponentMessage(new ChatComponentText(playerName + EnumChatFormatting.YELLOW + EnumChatFormatting.ITALIC + " NICK"));
-                            player.addChatComponentMessage(new ChatComponentText(""));
-                            return;
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.YELLOW + "NICK " + EnumChatFormatting.RESET + splitedMessage[0] + EnumChatFormatting.YELLOW + " has joined " + "(" + EnumChatFormatting.AQUA + lobby2 + EnumChatFormatting.YELLOW + "/" + EnumChatFormatting.AQUA + lobby4 + EnumChatFormatting.YELLOW + ")!"));
+                            nick = false;
                         }
-
-                        double networklevel = response.getNetworkLevel();
-                        int winstreak = response.getIntProperty("stats.Bedwars.winstreak", 0);
-                        double wins = response.getDoubleProperty("stats.Bedwars.wins_bedwars", 0);
-                        double losses = response.getDoubleProperty("stats.Bedwars.losses_bedwars", 0);
-                        double kills = response.getDoubleProperty("stats.Bedwars.kills_bedwars", 0);
-                        double deaths = response.getDoubleProperty("stats.Bedwars.deaths_bedwars", 0);
-                        double finalkills = response.getDoubleProperty("stats.Bedwars.final_kills_bedwars", 0);
-                        double finaldeaths = response.getDoubleProperty("stats.Bedwars.final_deaths_bedwars", 0);
-
-                        double wl = wins / losses;
-                        double kd = kills / deaths;
-                        double fkd = finalkills / finaldeaths;
-
-                        rank1 = response.getHighestRank();
-                        plus = response.getSelectedPlusColor();
-                        getColors(rank1, stars, plus);
-                        numbers.removeAll(numbers);
-                        getStars(stars);
-
-                        EnumChatFormatting green = EnumChatFormatting.GREEN;
-                        player.addChatComponentMessage(new ChatComponentText(starColor1 + "[" + starColor2 + numbers.get(0) + starColor3 + numbers.get(1) + starColor4 + numbers.get(2) + starColor5 + numbers.get(3) + starColor6 + star1 + starColor7 + "] " + rankColor1 + prefix + plusColor + plusString + rankColor2 + suffix + response.getName() + EnumChatFormatting.WHITE + ":"));
-                        player.addChatComponentMessage(new ChatComponentText("Network Level: " + green + format2.format(networklevel)));
-                        player.addChatComponentMessage(new ChatComponentText("Total Winstreak: " + green + winstreak));
-                        player.addChatComponentMessage(new ChatComponentText("Total Wins: " + green + format2.format(wins)));
-                        player.addChatComponentMessage(new ChatComponentText("Total Kills: " + green + format2.format(kills)));
-                        player.addChatComponentMessage(new ChatComponentText("Total Final Kills: " + green + format2.format(finalkills)));
-                        player.addChatComponentMessage(new ChatComponentText("Total W/L Ratio: " + green + format.format(wl)));
-                        player.addChatComponentMessage(new ChatComponentText("Total K/D Ratio: " + green + format.format(kd)));
-                        player.addChatComponentMessage(new ChatComponentText("Total FK/D Ratio: " + green + format.format(fkd)));
-                        player.addChatComponentMessage(new ChatComponentText(""));
-                    } catch (InterruptedException e) {
-                        player.addChatComponentMessage(new ChatComponentText(loadedPlayer.getGameProfile().getName() + "|" + EnumChatFormatting.ITALIC +  " API FAIL [1]"));
-                    } catch (ExecutionException e) {
-                        player.addChatComponentMessage(new ChatComponentText(loadedPlayer.getGameProfile().getName() + "|" + EnumChatFormatting.ITALIC + " API FAIL [2]: On Cooldown"));
+                        if (nick) {
+                            rank1 = response.getHighestRank();
+                            plus = response.getSelectedPlusColor();
+                            getColors(rank1, stars, plus);
+                            numbers.removeAll(numbers);
+                            getStars(stars);
+                            Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(starColor1 + "[" + starColor2 + numbers.get(0) + starColor3 + numbers.get(1) + starColor4 + numbers.get(2) + starColor5 + numbers.get(3) + starColor6 + star1 + starColor7 + "] " + rankColor2 + response.getName() + EnumChatFormatting.YELLOW + " has joined " + "(" + EnumChatFormatting.AQUA + lobby2 + EnumChatFormatting.YELLOW + "/" + EnumChatFormatting.AQUA + lobby4 + EnumChatFormatting.YELLOW + ")!"));
+                        }
+                    } catch (InterruptedException | ArrayIndexOutOfBoundsException | ExecutionException e) {
+                        return;
                     }
                 });
-
-                } else {
-                    return;
-                }
-            });
-        } else {
-            player.addChatComponentMessage(new ChatComponentText(""));
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "BWStars Usages:"));
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws key [API Key] // Sets and stores API Key"));
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws deletekey // Deletes API Key stored"));
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws stats [Player] // Detailed stat lookup of a player"));
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws team [Team] // Stat lookup via team colour"));
-            player.addChatComponentMessage(new ChatComponentText(EnumChatFormatting.RED + "/bws togglequeue // Toggle queue stars"));
-            player.addChatComponentMessage(new ChatComponentText(""));
-            return;
-        }
+                event.setCanceled(true);
+            }
+        } catch (ArrayIndexOutOfBoundsException e){ return; }
     }
-
-    //This is for the check when you input your api key for the first time
-    protected String getRandomString() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-        StringBuilder string = new StringBuilder();
-        Random rnd = new Random();
-        while (string.length() < 12) { // length of the random string.
-            int index = (int) (rnd.nextFloat() * chars.length());
-            string.append(chars.charAt(index));
-        }
-        String random = string.toString();
-        return random;
-    }
-
-    private static final DecimalFormat format = new DecimalFormat("0.00");
-    private static final DecimalFormat format2 = new DecimalFormat("0");
 
     public EnumChatFormatting getPlus(String plus){
         if(plus.contains("RED")){plusColor = EnumChatFormatting.RED;}
@@ -354,7 +108,6 @@ public class BWStars extends CommandBase {
         if(plus.contains("DARK_BLUE")){plusColor = EnumChatFormatting.DARK_BLUE;}
         return plusColor;
     }
-
     public void getStars(int stars){
         LinkedList<Integer> stack = new LinkedList<Integer>();
         while (stars > 0) {
@@ -384,6 +137,7 @@ public class BWStars extends CommandBase {
         }
         return;
     }
+
     public void getColors(String rank, int star, String plus){
         if(rank.contains("NONE")){
             rankColor1 = EnumChatFormatting.GRAY;

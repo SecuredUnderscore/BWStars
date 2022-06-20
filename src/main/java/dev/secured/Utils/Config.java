@@ -85,6 +85,7 @@ public class Config {
                 w.write(System.lineSeparator());
                 w.write("# Hypixel API Key" + System.lineSeparator());
                 w.write("api-key: empty" + System.lineSeparator());
+                w.write("queue-toggle: empty" + System.lineSeparator());
                 w.close();
 
                 System.out.println("new config has been created (good)");
@@ -102,6 +103,14 @@ public class Config {
 
     public static void setStoredAPIKey(String key) {
         setValueFromConfig("api-key", key);
+    }
+
+    public static String getStoredToggleQueue() {
+        return getValueFromConfig("queue-toggle");
+    }
+
+    public static void setStoredToggleQueue(String key) {
+        setValueFromConfig("queue-toggle", key);
     }
 
 }
