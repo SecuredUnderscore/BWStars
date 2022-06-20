@@ -10,6 +10,10 @@ BWStars is an easy to use stat checker for Hypixel Bed Wars
   
   ![Capture](https://user-images.githubusercontent.com/106268219/173104726-18fca9a0-b26a-4448-9191-bdf21ad17c7e.PNG)
   
+  - **Bed Wars Queue Stars:** /bws togglequeue (toggleable); This adds a players star infront of their username when they join a queue. (Experimental)
+  
+  ![Capture](https://user-images.githubusercontent.com/106268219/174650807-67986600-6e08-4e89-aa20-7f96cca61c0e.PNG)
+  
   - **Bed Wars Mass Lookup:** *Keybinding*; Use this to scope out a lobby before or during a game.
   
   ![Capture](https://user-images.githubusercontent.com/106268219/173105532-25bb5e4a-e348-4e49-913c-2de3d8b98de5.PNG)
